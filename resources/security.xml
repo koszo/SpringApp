@@ -1,0 +1,57 @@
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+ http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+ http://www.springframework.org/schema/security
+ http://www.springframework.org/schema/security/spring-security.xsd">
+
+	<!-- Auto enables the spring security configuration -->
+	<http auto-config='true'>
+
+        <!-- Authorises the urls based on the role or roles the logged in user has  -->
+		<intercept-url pattern="/country/**" access="hasRole('ROLE_CLIENT')" />
+		<intercept-url pattern="/region/**" access="hasAnyRole('ROLE_ADMIN', 'ROLE_CLIENT')" />
+		
+
+        <!-- Enables the login form:
+         login-page - the action of the login form
+         authentication-success-forward-url - the link where the app will take you in case of succesful login
+         authentication-failure-url - the link where the app will take you in case of failed login
+         username-parameter&password-parameter - form parameter names from the login form-->
+		<form-login login-page="/login" 
+            authentication-success-forward-url="/successfulLogin"
+            authentication-failure-url="/failedlogin"
+			username-parameter="username" password-parameter="password" />
+			
+
+        <!-- Enables the logount button:
+        logout-url - the action of the logout form
+        logout-success-url - the link where the app will take you after logging out
+        invalidate-session - the app will erase the logged user from in memory
+         -->
+		<logout logout-url="/logout" logout-success-url="/login"
+			invalidate-session="true" />
+			
+		
+
+        <!-- custom spring security feature -->
+		<csrf />
+	</http>
+
+    <!-- The authentication manager/provider validate the username/passwords inputed by the user and assigned
+    the correct roles to it
+    
+    There is a wide variety of authentication providers. You can use sql statements like here, you could use
+    a DAO class to access the database, etc. -->
+	<authentication-manager>
+		<authentication-provider>
+			<jdbc-user-service data-source-ref="dataSource"
+				users-by-username-query="select username, password, enabled from user where username=?"
+				authorities-by-username-query="select u.username, r.name from user u 
+				inner join user_role ur ON u.userId = ur.userId
+				inner join role r ON r.roleId = ur.roleId
+				where u.username =?" />
+		</authentication-provider>
+	</authentication-manager>
+
+</beans:beans>
